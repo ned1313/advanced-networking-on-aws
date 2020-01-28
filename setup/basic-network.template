@@ -1,0 +1,340 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Basic VPC deployment with two public subnets in two different Availability Zones",
+    "Parameters": {},
+    "Resources": {
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "EnableDnsSupport": "true",
+                "EnableDnsHostnames": "true",
+                "CidrBlock": "10.0.0.0/16",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "PublicSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.1.0/24",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "PublicSubnet2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.2.0/24",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "1",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "PrivateSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.3.0/24",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "0",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "PrivateSubnet2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.4.0/24",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    }
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "1",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "GatewayToInternet": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "PublicRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "PublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "GatewayToInternet",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "PublicSubnetRouteTableAssociation1": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet1"
+                },
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        },
+        "PublicSubnetRouteTableAssociation2": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet2"
+                },
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        },
+        "PrivateRouteTable1": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "PrivateRoute1": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "NATGateway1",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTable1"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "NATGateway1"
+                }
+            }
+        },
+        "PrivateSubnetRouteTableAssociation1": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PrivateSubnet1"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTable1"
+                }
+            }
+        },
+        "EIP1": {
+            "Type": "AWS::EC2::EIP",
+            "Properties":{
+                "Domain": "VPC",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "NATGateway1": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::GetAtt": ["EIP1","AllocationId"]
+                },
+                "SubnetId":{
+                    "Ref": "PublicSubnet1"
+                },
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "PublicNetworkAcl": {
+            "Type": "AWS::EC2::NetworkAcl",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    }
+                ]
+            }
+        },
+        "OutboundPublicNetworkAclEntry": {
+            "Type": "AWS::EC2::NetworkAclEntry",
+            "Properties": {
+                "NetworkAclId": {
+                    "Ref": "PublicNetworkAcl"
+                },
+                "RuleNumber": "100",
+                "Protocol": "6",
+                "RuleAction": "allow",
+                "Egress": "true",
+                "CidrBlock": "0.0.0.0/0",
+                "PortRange": {
+                    "From": "0",
+                    "To": "65535"
+                }
+            }
+        },
+        "PublicSubnetNetworkAclAssociation1": {
+            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet1"
+                },
+                "NetworkAclId": {
+                    "Ref": "PublicNetworkAcl"
+                }
+            }
+        },
+        "PublicSubnetNetworkAclAssociation2": {
+            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet2"
+                },
+                "NetworkAclId": {
+                    "Ref": "PublicNetworkAcl"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "VPCId": {
+            "Description": "VPCId of the newly created VPC",
+            "Value": {
+                "Ref": "VPC"
+            }
+        },
+        "PublicSubnet1": {
+            "Description": "SubnetId of the public subnet",
+            "Value": {
+                "Ref": "PublicSubnet1"
+            }
+        },
+        "PublicSubnet2": {
+            "Description": "SubnetId of the public subnet",
+            "Value": {
+                "Ref": "PublicSubnet2"
+            }
+        }
+    }
+}
