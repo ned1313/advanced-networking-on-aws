@@ -13,6 +13,10 @@
                     {
                         "Key": "Company",
                         "Value": "Globomantics"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "globo-primary"
                     }
                 ]
             }
@@ -32,6 +36,10 @@
                     {
                         "Key": "Network",
                         "Value": "Public"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "subnet-1"
                     }
                 ],
                 "AvailabilityZone": {
@@ -59,6 +67,10 @@
                     {
                         "Key": "Network",
                         "Value": "Public"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "subnet-2"
                     }
                 ],
                 "AvailabilityZone": {
@@ -71,7 +83,7 @@
                 }
             }
         },
-        "PrivateSubnet1": {
+        "PublicSubnet3": {
             "Type": "AWS::EC2::Subnet",
             "Properties": {
                 "VpcId": {
@@ -86,6 +98,41 @@
                     {
                         "Key": "Network",
                         "Value": "Private"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "subnet-3"
+                    }
+                ],
+                "AvailabilityZone": {
+                    "Fn::Select": [
+                        "2",
+                        {
+                            "Fn::GetAZs": ""
+                        }
+                    ]
+                }
+            }
+        },
+        "PrivateSubnet1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.4.0/24",
+                "Tags": [
+                    {
+                        "Key": "Company",
+                        "Value": "Globomantics"
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Private"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "subnet-4"
                     }
                 ],
                 "AvailabilityZone": {
@@ -104,7 +151,7 @@
                 "VpcId": {
                     "Ref": "VPC"
                 },
-                "CidrBlock": "10.0.4.0/24",
+                "CidrBlock": "10.0.5.0/24",
                 "Tags": [
                     {
                         "Key": "Company",
@@ -113,11 +160,15 @@
                     {
                         "Key": "Network",
                         "Value": "Private"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": "subnet-5"
                     }
                 ],
                 "AvailabilityZone": {
                     "Fn::Select": [
-                        "1",
+                        "2",
                         {
                             "Fn::GetAZs": ""
                         }
@@ -196,71 +247,15 @@
                 }
             }
         },
-        "PrivateRouteTable1": {
-            "Type": "AWS::EC2::RouteTable",
-            "Properties": {
-                "VpcId": {
-                    "Ref": "VPC"
-                },
-                "Tags": [
-                    {
-                        "Key": "Company",
-                        "Value": "Globomantics"
-                    }
-                ]
-            }
-        },
-        "PrivateRoute1": {
-            "Type": "AWS::EC2::Route",
-            "DependsOn": "NATGateway1",
-            "Properties": {
-                "RouteTableId": {
-                    "Ref": "PrivateRouteTable1"
-                },
-                "DestinationCidrBlock": "0.0.0.0/0",
-                "GatewayId": {
-                    "Ref": "NATGateway1"
-                }
-            }
-        },
-        "PrivateSubnetRouteTableAssociation1": {
+        "PublicSubnetRouteTableAssociation3": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
             "Properties": {
                 "SubnetId": {
-                    "Ref": "PrivateSubnet1"
+                    "Ref": "PublicSubnet3"
                 },
                 "RouteTableId": {
-                    "Ref": "PrivateRouteTable1"
+                    "Ref": "PublicRouteTable"
                 }
-            }
-        },
-        "EIP1": {
-            "Type": "AWS::EC2::EIP",
-            "Properties":{
-                "Domain": "VPC",
-                "Tags": [
-                    {
-                        "Key": "Company",
-                        "Value": "Globomantics"
-                    }
-                ]
-            }
-        },
-        "NATGateway1": {
-            "Type": "AWS::EC2::NatGateway",
-            "Properties": {
-                "AllocationId": {
-                    "Fn::GetAtt": ["EIP1","AllocationId"]
-                },
-                "SubnetId":{
-                    "Ref": "PublicSubnet1"
-                },
-                "Tags": [
-                    {
-                        "Key": "Company",
-                        "Value": "Globomantics"
-                    }
-                ]
             }
         },
         "PublicNetworkAcl": {
@@ -315,6 +310,17 @@
                     "Ref": "PublicNetworkAcl"
                 }
             }
+        },
+        "PublicSubnetNetworkAclAssociation3": {
+            "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "PublicSubnet3"
+                },
+                "NetworkAclId": {
+                    "Ref": "PublicNetworkAcl"
+                }
+            }
         }
     },
     "Outputs": {
@@ -322,18 +328,6 @@
             "Description": "VPCId of the newly created VPC",
             "Value": {
                 "Ref": "VPC"
-            }
-        },
-        "PublicSubnet1": {
-            "Description": "SubnetId of the public subnet",
-            "Value": {
-                "Ref": "PublicSubnet1"
-            }
-        },
-        "PublicSubnet2": {
-            "Description": "SubnetId of the public subnet",
-            "Value": {
-                "Ref": "PublicSubnet2"
             }
         }
     }
