@@ -198,3 +198,65 @@ aws ec2 replace-network-acl-association --association-id $sub_4_assoc \
 # Service Endpoints
 ###################
 
+# Gateway endpoint
+
+service_name=$(aws ec2 describe-vpc-endpoint-services --query 'ServiceNames[?ends_with(@,`s3`)]' --output text)
+
+route_table_ids=$(aws ec2 describe-route-tables \
+  --filter Name=association.subnet-id,Values=$subnet_4_id \
+  --query 'RouteTables[0].RouteTableId' --output text)
+
+aws ec2 create-vpc-endpoint --vpc-id $vpc_id \
+  --vpc-endpoint-type Gateway \
+  --service-name $service_name \
+  --route-table-ids $route_table_ids
+
+# Interface endpoint
+
+service_name=$(aws ec2 describe-vpc-endpoint-services --query 'ServiceNames[?ends_with(@,`logs`)]' --output text)
+
+aws ec2 create-vpc-endpoint --vpc-id $vpc_id \
+  --vpc-endpoint-type Interface \
+  --service-name $service_name \
+  --subnet-ids $subnet_1_id \
+  --private-dns-enabled
+
+##############
+# Flow Logs
+##############
+
+# Create an S3 bucket
+
+bucket_name=$(echo globo-logs-$RANDOM)
+
+bucket=$(aws s3api create-bucket --bucket $bucket_name)
+
+# Create a flow log for the VPC to CloudWatch
+
+# Create a role and policy to allow 
+
+role=$(aws iam create-role --role-name flow-log-role \
+  --assume-role-policy-document file://flow-log-role.txt)
+
+policy=$(aws iam create-policy --policy-name flow-log-policy \
+  --policy-document file://flow-log-policy.txt)
+
+aws iam attach-role-policy --role-name flow-log-role \
+  --policy-arn $(echo $policy | jq .Policy.Arn -r)
+
+aws ec2 create-flow-logs \
+  --deliver-logs-permission-arn $(echo $role | jq .Role.Arn -r) \
+  --log-group-name globo-vpc-logs \
+  --resource-ids $vpc_id \
+  --resource-type VPC \
+  --traffic-type ALL
+
+# Create a flow log for public subnets to S3 with custom log format
+
+aws ec2 create-flow-logs \
+--resource-type Subnet \
+--resource-ids $public_subnets \
+--traffic-type REJECT \
+--log-destination-type s3 \
+--log-destination "arn:aws:s3:::$bucket_name/flow_logs/" \
+--log-format '${version} ${vpc-id} ${subnet-id} ${instance-id} ${srcaddr} ${dstaddr} ${srcport} ${dstport} ${protocol} ${tcp-flags} ${type} ${pkt-srcaddr} ${pkt-dstaddr}'
