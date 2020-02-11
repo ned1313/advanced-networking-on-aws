@@ -233,7 +233,7 @@ bucket=$(aws s3api create-bucket --bucket $bucket_name)
 
 # Create a flow log for the VPC to CloudWatch
 
-# Create a role and policy to allow 
+# Create a role and policy to allow VPC to write to CloudWatch
 
 role=$(aws iam create-role --role-name flow-log-role \
   --assume-role-policy-document file://flow-log-role.txt)
@@ -243,6 +243,8 @@ policy=$(aws iam create-policy --policy-name flow-log-policy \
 
 aws iam attach-role-policy --role-name flow-log-role \
   --policy-arn $(echo $policy | jq .Policy.Arn -r)
+
+# Create flow log for vpc going to CloudWatch
 
 aws ec2 create-flow-logs \
   --deliver-logs-permission-arn $(echo $role | jq .Role.Arn -r) \
