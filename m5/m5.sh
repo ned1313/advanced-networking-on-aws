@@ -188,6 +188,9 @@ aws ec2 create-network-acl-entry \
 
 # Associate NACL with subnet-4
 
+subnet_4_id=$(aws ec2 describe-subnets --filter Name="tag:Name",Values="subnet-4" \
+  --query 'Subnets[0].SubnetId' --output text)
+
 sub_4_assoc=$(aws ec2 describe-network-acls --filters Name=association.subnet-id,Values=$subnet_4_id \
   --query "NetworkAcls[0].Associations[?SubnetId=='$subnet_4_id'].NetworkAclAssociationId" --output text)
 
