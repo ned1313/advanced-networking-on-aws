@@ -20,7 +20,8 @@ vpc3_id=$(aws ec2 describe-vpcs --filters Name="tag:Name",Values="globo-vpc3" \
   --query 'Vpcs[0].VpcId' --output text)
 
 # Create the peering request
-peer_req=$(aws ec2 create-vpc-peering-connection --vpc-id $vpc1_id --peer-vpc-id $vpc3_id)
+peer_req=$(aws ec2 create-vpc-peering-connection --vpc-id $vpc1_id \
+  --peer-vpc-id $vpc3_id)
 
 aws ec2 create-tags \
   --resources $(echo $peer_req | jq .VpcPeeringConnection.VpcPeeringConnectionId -r) \

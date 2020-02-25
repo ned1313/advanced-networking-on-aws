@@ -177,7 +177,7 @@
                     },
                     {
                         "Key": "Name",
-                        "Value": "globo-vpc1"
+                        "Value": "globo-s2s"
                     }
                 ]
             }
